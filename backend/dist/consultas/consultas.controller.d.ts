@@ -14,12 +14,12 @@ export declare class ConsultasController {
             tempoMedio: number;
         };
         consultas: {
-            tempoMs: number | null;
             id: string;
             tipo: string;
             termo: string;
             status: string;
             fonte: string | null;
+            tempoMs: number | null;
             criadoEm: Date;
         }[];
     }>;

@@ -11,6 +11,7 @@ import { AppService } from './app.service.js';
 import { DatabaseModule } from './database/database.module.js';
 import { CepModule } from './cep/cep.module.js';
 import { ConsultasModule } from './consultas/consultas.module.js';
+import { CnpjModule } from './cnpj/cnpj.module.js';
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
@@ -20,6 +21,7 @@ AppModule = __decorate([
             DatabaseModule,
             CepModule,
             ConsultasModule,
+            CnpjModule,
         ],
         controllers: [AppController],
         providers: [AppService],

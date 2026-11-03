@@ -1,0 +1,191 @@
+<header class="page-header">
+  <span class="eyebrow">CONSULTAS CADASTRAIS</span>
+  <h1>Consulta de CNPJ</h1>
+  <p>
+    Consulte informações públicas de empresas brasileiras.
+  </p>
+</header>
+
+<div class="content-grid">
+  <section class="panel">
+    <div class="panel-heading">
+      <h2>Pesquisar empresa</h2>
+      <p>Informe o CNPJ da empresa que deseja consultar.</p>
+    </div>
+
+    <form (ngSubmit)="consultar()">
+      <label for="cnpj">CNPJ</label>
+
+      <div class="input-group">
+        <input
+          id="cnpj"
+          name="cnpj"
+          type="text"
+          maxlength="18"
+          autocomplete="off"
+          placeholder="00.000.000/0001-91"
+          [ngModel]="cnpj()"
+          (ngModelChange)="cnpj.set($event)"
+        />
+
+        <button type="submit" [disabled]="carregando()">
+          {{ carregando() ? 'Consultando...' : 'Consultar CNPJ' }}
+        </button>
+      </div>
+
+      <p class="field-hint">
+        Aceita CNPJ numérico ou alfanumérico, com ou sem pontuação.
+      </p>
+    </form>
+
+    @if (erro()) {
+      <div class="error-message" role="alert">
+        {{ erro() }}
+      </div>
+    }
+  </section>
+
+  <aside class="panel information-panel">
+    <span class="eyebrow">FONTE DE DADOS</span>
+    <h2>BrasilAPI</h2>
+
+    <p>
+      As informações são obtidas de uma API pública,
+      sem necessidade de cadastro ou chave de acesso.
+    </p>
+
+    <div class="provider">
+      <span class="status-dot"></span>
+      Integração configurada
+    </div>
+
+    <p class="notice">
+      A disponibilidade da consulta depende do fornecedor.
+      Os dados não substituem uma certidão oficial.
+    </p>
+  </aside>
+</div>
+
+@if (empresa(); as resultado) {
+  <section class="panel result-panel">
+    <div class="company-header">
+      <div>
+        <span class="eyebrow">DADOS EMPRESARIAIS</span>
+
+        <h2>{{ resultado.razaoSocial }}</h2>
+
+        <p>
+          {{ formatarCnpj(resultado.cnpj) }}
+        </p>
+      </div>
+
+      <span
+        class="status-badge"
+        [class.ativa]="resultado.situacaoCadastral === 'ATIVA'"
+      >
+        {{ resultado.situacaoCadastral }}
+      </span>
+    </div>
+
+    <div class="section-title">Informações cadastrais</div>
+
+    <div class="details-grid">
+      <div class="field">
+        <span>Razão social</span>
+        <strong>{{ resultado.razaoSocial }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Nome fantasia</span>
+        <strong>{{ resultado.nomeFantasia || 'Não informado' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Data de abertura</span>
+        <strong>{{ formatarData(resultado.dataAbertura) }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Tipo de estabelecimento</span>
+        <strong>{{ resultado.matrizFilial || 'Não informado' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Porte da empresa</span>
+        <strong>{{ resultado.porte || 'Não informado' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Capital social</span>
+        <strong>{{ formatarMoeda(resultado.capitalSocial) }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Natureza jurídica</span>
+        <strong>{{ resultado.naturezaJuridica || 'Não informada' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Fonte</span>
+        <strong>{{ resultado.fonte }}</strong>
+      </div>
+    </div>
+
+    <div class="section-title">Atividade econômica principal</div>
+
+    <div class="activity-card">
+      <span>
+        CNAE {{ resultado.atividadePrincipal.codigo ?? '—' }}
+      </span>
+
+      <strong>
+        {{ resultado.atividadePrincipal.descricao || 'Não informado' }}
+      </strong>
+    </div>
+
+    <div class="section-title">Endereço cadastrado</div>
+
+    <div class="details-grid">
+      <div class="field">
+        <span>Logradouro</span>
+        <strong>{{ resultado.endereco.logradouro || 'Não informado' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Número</span>
+        <strong>{{ resultado.endereco.numero || 'Não informado' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Complemento</span>
+        <strong>{{ resultado.endereco.complemento || 'Não informado' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Bairro</span>
+        <strong>{{ resultado.endereco.bairro || 'Não informado' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Município / UF</span>
+        <strong>
+          {{ resultado.endereco.municipio || '—' }} /
+          {{ resultado.endereco.uf || '—' }}
+        </strong>
+      </div>
+
+      <div class="field">
+        <span>CEP</span>
+        <strong>{{ resultado.endereco.cep || 'Não informado' }}</strong>
+      </div>
+    </div>
+  </section>
+} @else {
+  <section class="panel empty-state">
+    <div class="empty-icon">BR</div>
+    <h2>Nenhuma empresa consultada</h2>
+    <p>
+      Informe um CNPJ para visualizar as informações cadastrais.
+    </p>
+  </section>
+}
