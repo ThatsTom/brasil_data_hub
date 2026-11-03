@@ -1,0 +1,304 @@
+
+<header class="page-header">
+  <div>
+    <span class="eyebrow">DADOS GEOGRÁFICOS</span>
+    <h1>Estados e Municípios</h1>
+    <p>
+      Consulte a organização territorial brasileira
+      utilizando dados oficiais do IBGE.
+    </p>
+  </div>
+
+  <span class="source-badge">Fonte: IBGE</span>
+</header>
+
+<section class="stats-grid">
+  <article class="stat-card">
+    <span>Unidades da Federação</span>
+    <strong>{{ estados().length }}</strong>
+    <small>Estados e Distrito Federal</small>
+  </article>
+
+  <article class="stat-card">
+    <span>Municípios da UF</span>
+    <strong>{{ total() }}</strong>
+    <small>Na base consultada</small>
+  </article>
+
+  <article class="stat-card">
+    <span>Resultados encontrados</span>
+    <strong>{{ totalFiltrado() }}</strong>
+    <small>Após aplicar a pesquisa</small>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="section-heading">
+    <div>
+      <h2>Pesquisar localidades</h2>
+      <p>Selecione um estado e procure um município.</p>
+    </div>
+  </div>
+
+  <div class="state-selector">
+    <label for="uf">Estado</label>
+
+    <select
+      id="uf"
+      name="uf"
+      [ngModel]="uf()"
+      (ngModelChange)="alterarUf($event)"
+      [disabled]="carregandoEstados()"
+    >
+      @for (estado of estados(); track estado.id) {
+        <option [value]="estado.sigla">
+          {{ estado.nome }} ({{ estado.sigla }})
+        </option>
+      }
+    </select>
+  </div>
+
+  @if (estadoSelecionado(); as estado) {
+    <div class="state-info">
+      <div>
+        <span>Estado selecionado</span>
+        <strong>{{ estado.nome }} — {{ estado.sigla }}</strong>
+      </div>
+
+      <div>
+        <span>Código IBGE da UF</span>
+        <strong>{{ estado.id }}</strong>
+      </div>
+
+      <div>
+        <span>Região</span>
+        <strong>{{ estado.regiao.nome }}</strong>
+      </div>
+    </div>
+  }
+
+  <form class="search-form" (ngSubmit)="pesquisar()">
+    <div class="input-wrapper">
+      <label for="busca">Município ou código IBGE</label>
+
+      <input
+        id="busca"
+        name="busca"
+        type="search"
+        maxlength="80"
+        placeholder="Ex.: São Paulo ou 3550308"
+        [ngModel]="busca()"
+        (ngModelChange)="busca.set($event)"
+        [disabled]="!uf()"
+      />
+    </div>
+
+    <button
+      class="primary"
+      type="submit"
+      [disabled]="carregandoMunicipios() || !uf()"
+    >
+      {{ carregandoMunicipios() ? 'Pesquisando...' : 'Pesquisar' }}
+    </button>
+
+    <button
+      class="secondary"
+      type="button"
+      (click)="limpar()"
+      [disabled]="carregandoMunicipios()"
+    >
+      Limpar
+    </button>
+  </form>
+
+  @if (erroEstados()) {
+    <div class="error-message" role="alert">
+      {{ erroEstados() }}
+    </div>
+  }
+
+  @if (erroMunicipios()) {
+    <div class="error-message" role="alert">
+      {{ erroMunicipios() }}
+    </div>
+  }
+
+  @if (cacheDesatualizado()) {
+    <div class="cache-warning" role="status">
+      O IBGE não respondeu à atualização.
+      Exibindo os últimos dados disponíveis em cache.
+    </div>
+  }
+</section>
+
+<section class="panel table-panel">
+  <div class="section-heading">
+    <div>
+      <h2>Municípios</h2>
+
+      <p>
+        @if (atualizadoEm()) {
+          Dados consultados em
+          {{
+            atualizadoEm() |
+            date:'dd/MM/yyyy HH:mm':'-0300'
+          }}
+        } @else {
+          Selecione um estado para consultar os municípios.
+        }
+      </p>
+    </div>
+  </div>
+
+  @if (carregandoMunicipios()) {
+    <div class="empty-state">
+      Carregando municípios...
+    </div>
+  } @else if (!erroMunicipios()) {
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Código IBGE</th>
+            <th>Município</th>
+            <th>UF</th>
+            <th>Região imediata</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (municipio of municipios(); track municipio.id) {
+            <tr>
+              <td>
+                <span class="code-badge">
+                  {{ municipio.id }}
+                </span>
+              </td>
+
+              <td class="municipio-name">
+                {{ municipio.nome }}
+              </td>
+
+              <td>{{ uf() }}</td>
+
+              <td>
+                {{ municipio.regiaoImediata || '—' }}
+              </td>
+
+              <td>
+                <button
+                  type="button"
+                  class="details-button"
+                  (click)="selecionar(municipio)"
+                >
+                  Ver detalhes
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty-state">
+                Nenhum município encontrado.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <span>
+        {{ totalFiltrado() }} municípios encontrados
+      </span>
+
+      <div class="pagination">
+        <label for="limite">Por página:</label>
+
+        <select
+          id="limite"
+          name="limite"
+          [ngModel]="limite()"
+          (ngModelChange)="alterarLimite($event)"
+          [disabled]="carregandoMunicipios()"
+        >
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+        </select>
+
+        <button
+          type="button"
+          (click)="mudarPagina(-1)"
+          [disabled]="pagina() <= 1 || carregandoMunicipios()"
+        >
+          Anterior
+        </button>
+
+        <span>
+          {{ pagina() }} / {{ totalPaginas() }}
+        </span>
+
+        <button
+          type="button"
+          (click)="mudarPagina(1)"
+          [disabled]="pagina() >= totalPaginas() || carregandoMunicipios()"
+        >
+          Próxima
+        </button>
+      </div>
+    </div>
+  }
+</section>
+
+@if (selecionado(); as municipio) {
+  <section class="panel detail-panel">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">DETALHES DA LOCALIDADE</span>
+        <h2>{{ municipio.nome }}</h2>
+      </div>
+
+      <button
+        type="button"
+        class="secondary"
+        (click)="selecionado.set(null)"
+      >
+        Fechar detalhes
+      </button>
+    </div>
+
+    <div class="details-grid">
+      <div class="field">
+        <span>Município</span>
+        <strong>{{ municipio.nome }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Código IBGE</span>
+        <strong>{{ municipio.id }}</strong>
+      </div>
+
+      <div class="field">
+        <span>UF</span>
+        <strong>{{ estadoSelecionado()?.nome }} — {{ uf() }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Região geográfica</span>
+        <strong>{{ estadoSelecionado()?.regiao?.nome || '—' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Região imediata</span>
+        <strong>{{ municipio.regiaoImediata || 'Não informada' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Região intermediária</span>
+        <strong>{{ municipio.regiaoIntermediaria || 'Não informada' }}</strong>
+      </div>
+    </div>
+  </section>
+}

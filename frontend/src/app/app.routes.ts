@@ -33,6 +33,13 @@ export const routes: Routes = [
         title: 'Diretório de Bancos | Brasil Data Hub',
     },
     {
+        path: 'localidades',
+        loadComponent: () =>
+            import('./features/localidades/localidades.page')
+                .then(m => m.LocalidadesPage),
+        title: 'Estados e Municípios | Brasil Data Hub',
+    },
+    {
         path: '**',
         redirectTo: 'cep',
     },
