@@ -1,0 +1,587 @@
+
+<header class="page-header">
+  <div>
+    <span class="eyebrow">
+      BRASIL DATA HUB / ANALYTICS
+    </span>
+
+    <h1>Dashboard Corporativo</h1>
+
+    <p>
+      Indicadores reais das consultas registradas na plataforma.
+    </p>
+  </div>
+
+  <div class="header-actions">
+    <span class="live-chip">
+      <span class="live-dot"></span>
+      Dados do PostgreSQL
+    </span>
+
+    <button
+      type="button"
+      class="outline-button"
+      (click)="exportarCsv()"
+      [disabled]="!dados() || carregando()"
+    >
+      Exportar CSV
+    </button>
+  </div>
+</header>
+
+<section class="panel filter-panel">
+  <form class="filters" (ngSubmit)="carregar()">
+    <div class="filter-field">
+      <label for="periodo">Período</label>
+
+      <select
+        id="periodo"
+        name="periodo"
+        [ngModel]="periodo()"
+        (ngModelChange)="alterarPeriodo($event)"
+      >
+        <option [ngValue]="7">
+          Últimos 7 dias
+        </option>
+
+        <option [ngValue]="30">
+          Últimos 30 dias
+        </option>
+
+        <option [ngValue]="90">
+          Últimos 90 dias
+        </option>
+
+        <option [ngValue]="0">
+          Personalizado
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="tipo">Módulo</label>
+
+      <select
+        id="tipo"
+        name="tipo"
+        [ngModel]="tipo()"
+        (ngModelChange)="tipo.set($event)"
+      >
+        @for (modulo of modulos; track modulo.tipo) {
+          <option [value]="modulo.tipo">
+            {{ modulo.nome }}
+          </option>
+        }
+      </select>
+    </div>
+
+    @if (periodo() === 0) {
+      <div class="filter-field">
+        <label for="inicio">Data inicial</label>
+
+        <input
+          id="inicio"
+          name="inicio"
+          type="date"
+          [ngModel]="inicio()"
+          (ngModelChange)="inicio.set($event)"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label for="fim">Data final</label>
+
+        <input
+          id="fim"
+          name="fim"
+          type="date"
+          [ngModel]="fim()"
+          (ngModelChange)="fim.set($event)"
+        />
+      </div>
+    }
+
+    <div class="filter-actions">
+      <button
+        class="primary-button"
+        type="submit"
+        [disabled]="carregando()"
+      >
+        {{
+          carregando()
+            ? 'Carregando...'
+            : 'Aplicar filtros'
+        }}
+      </button>
+    </div>
+  </form>
+
+  @if (erro()) {
+    <div class="error" role="alert">
+      {{ erro() }}
+    </div>
+  }
+
+  @if (dados(); as relatorio) {
+    <p class="period-description">
+      Exibindo {{ relatorio.filtros.inicio }}
+      até {{ relatorio.filtros.fim }}
+
+      @if (relatorio.filtros.tipo) {
+        · Módulo: {{ relatorio.filtros.tipo }}
+      } @else {
+        · Todos os módulos
+      }
+    </p>
+  }
+</section>
+
+@if (dados(); as relatorio) {
+  <section class="stats-grid">
+    <article class="stat-card accent-blue">
+      <span>Total de consultas</span>
+
+      <strong>
+        {{
+          relatorio.indicadores.total |
+          number:'1.0-0'
+        }}
+      </strong>
+
+      <small>
+        Dentro do período selecionado
+      </small>
+    </article>
+
+    <article class="stat-card accent-green">
+      <span>Taxa de sucesso</span>
+
+      <strong>
+        {{
+          relatorio.indicadores.taxaSucesso |
+          number:'1.1-1'
+        }}%
+      </strong>
+
+      <small>
+        {{ relatorio.indicadores.sucesso }}
+        consultas com sucesso
+      </small>
+    </article>
+
+    <article class="stat-card accent-violet">
+      <span>Tempo médio</span>
+
+      <strong>
+        {{ tempo(relatorio.indicadores.tempoMedio) }}
+      </strong>
+
+      <small>
+        Registros com tempo informado
+      </small>
+    </article>
+
+    <article class="stat-card accent-red">
+      <span>Indisponibilidade</span>
+
+      <strong>
+        {{ relatorio.indicadores.indisponivel }}
+      </strong>
+
+      <small>
+        Consultas com status indisponível
+      </small>
+    </article>
+
+    <article class="stat-card accent-slate">
+      <span>Variação do volume</span>
+
+      <strong
+        [class.positive]="
+          (relatorio.indicadores.variacaoPercentual ?? 0) > 0
+        "
+        [class.negative]="
+          (relatorio.indicadores.variacaoPercentual ?? 0) < 0
+        "
+      >
+        {{
+          formatarVariacao(
+            relatorio.indicadores.variacaoPercentual
+          )
+        }}
+      </strong>
+
+      <small>
+        Versus
+        {{ relatorio.indicadores.periodoAnterior }}
+        consultas no período anterior
+      </small>
+    </article>
+  </section>
+}
+
+<section class="charts-grid">
+  <article class="panel chart-panel chart-wide">
+    <div class="panel-title">
+      <h2>Evolução das consultas</h2>
+
+      <p>
+        Volume por dia, sucessos e indisponibilidades
+      </p>
+    </div>
+
+    <div class="chart-container chart-line">
+      <canvas
+        #graficoEvolucao
+        aria-label="Gráfico de evolução de consultas"
+        role="img"
+      ></canvas>
+    </div>
+  </article>
+
+  <article class="panel chart-panel">
+    <div class="panel-title">
+      <h2>Distribuição por módulo</h2>
+
+      <p>
+        Participação nas consultas do período
+      </p>
+    </div>
+
+    <div class="chart-container chart-doughnut">
+      <canvas
+        #graficoModulos
+        aria-label="Gráfico de distribuição por módulo"
+        role="img"
+      ></canvas>
+    </div>
+  </article>
+
+  <article class="panel chart-panel chart-full">
+    <div class="panel-title">
+      <h2>Tempo médio por fonte</h2>
+
+      <p>
+        Tempo registrado no banco, em milissegundos
+      </p>
+    </div>
+
+    <div class="chart-container chart-bar">
+      <canvas
+        #graficoFontes
+        aria-label="Gráfico de tempo médio por fonte"
+        role="img"
+      ></canvas>
+    </div>
+  </article>
+</section>
+
+@if (dados(); as relatorio) {
+  @if (relatorio.indicadores.total === 0) {
+    <section class="panel empty-info">
+      Nenhuma consulta encontrada para os filtros escolhidos.
+      Os gráficos ficarão vazios até haver dados no período.
+    </section>
+  }
+
+  <section class="tables-grid">
+    <article class="panel">
+      <div class="panel-title">
+        <h2>Desempenho por módulo</h2>
+
+        <p>
+          Quantidade, sucesso e tempo de resposta
+        </p>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Módulo</th>
+              <th>Consultas</th>
+              <th>Sucesso</th>
+              <th>Tempo médio</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (
+              item of relatorio.porModulo;
+              track item.tipo
+            ) {
+              <tr>
+                <td>
+                  <span class="type-badge">
+                    {{ item.tipo }}
+                  </span>
+                </td>
+
+                <td>
+                  {{ item.total }}
+                </td>
+
+                <td>
+                  {{
+                    item.taxaSucesso |
+                    number:'1.1-1'
+                  }}%
+                </td>
+
+                <td>
+                  {{ tempo(item.tempoMedio) }}
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td
+                  class="empty-table"
+                  colspan="4"
+                >
+                  Sem dados para o período.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-title">
+        <h2>Desempenho por fonte</h2>
+
+        <p>
+          Desempenho das integrações
+        </p>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Fonte</th>
+              <th>Total</th>
+              <th>Taxa de sucesso</th>
+              <th>Tempo médio</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (
+              item of relatorio.porFonte;
+              track item.fonte
+            ) {
+              <tr>
+                <td class="strong-cell">
+                  {{ item.fonte }}
+                </td>
+
+                <td>
+                  {{ item.total }}
+                </td>
+
+                <td>
+                  {{
+                    item.taxaSucesso |
+                    number:'1.1-1'
+                  }}%
+                </td>
+
+                <td>
+                  {{ tempo(item.tempoMedio) }}
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td
+                  class="empty-table"
+                  colspan="4"
+                >
+                  Sem dados para o período.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="tables-grid">
+    <article class="panel">
+      <div class="panel-title">
+        <h2>Pesquisas mais frequentes</h2>
+
+        <p>
+          Termos consultados com maior recorrência
+        </p>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Termo</th>
+              <th>Consultas</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (
+              item of relatorio.maisPesquisados;
+              track item.tipo + ':' + item.termo
+            ) {
+              <tr>
+                <td>
+                  <span class="type-badge">
+                    {{ item.tipo }}
+                  </span>
+                </td>
+
+                <td class="term-cell">
+                  {{ item.termo }}
+                </td>
+
+                <td>
+                  {{ item.total }}
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td
+                  class="empty-table"
+                  colspan="3"
+                >
+                  Nenhum termo encontrado.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-title">
+        <h2>Distribuição dos status</h2>
+
+        <p>
+          Resultado das operações no período
+        </p>
+      </div>
+
+      <div class="status-list">
+        @for (
+          item of relatorio.porStatus;
+          track item.status
+        ) {
+          <div class="status-row">
+            <span
+              class="status-badge"
+              [class.success]="
+                item.status === 'SUCESSO'
+              "
+              [class.failure]="
+                item.status === 'INDISPONIVEL'
+              "
+            >
+              {{ nomeStatus(item.status) }}
+            </span>
+
+            <strong>
+              {{ item.total }}
+            </strong>
+          </div>
+        } @empty {
+          <p class="empty-table">
+            Nenhuma operação neste período.
+          </p>
+        }
+      </div>
+    </article>
+  </section>
+
+  <section class="panel latest-panel">
+    <div class="panel-title">
+      <h2>Últimas 10 consultas</h2>
+
+      <p>
+        Registros mais recentes dentro dos filtros aplicados
+      </p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Pesquisa</th>
+            <th>Fonte</th>
+            <th>Status</th>
+            <th>Tempo</th>
+            <th>Data e hora</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (
+            item of relatorio.recentes;
+            track item.id
+          ) {
+            <tr>
+              <td>
+                <span class="type-badge">
+                  {{ item.tipo }}
+                </span>
+              </td>
+
+              <td class="term-cell">
+                {{ item.termo }}
+              </td>
+
+              <td>
+                {{ item.fonte || '—' }}
+              </td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [class.success]="
+                    item.status === 'SUCESSO'
+                  "
+                  [class.failure]="
+                    item.status === 'INDISPONIVEL'
+                  "
+                >
+                  {{ nomeStatus(item.status) }}
+                </span>
+              </td>
+
+              <td>
+                {{ tempo(item.tempoMs) }}
+              </td>
+
+              <td>
+                {{
+                  item.criadoEm |
+                  date:'dd/MM/yyyy HH:mm':'-0300'
+                }}
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td
+                class="empty-table"
+                colspan="6"
+              >
+                Nenhuma consulta encontrada.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
