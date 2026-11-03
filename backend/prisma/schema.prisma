@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Consulta {
+  id        String   @id @default(cuid())
+  tipo      String
+  termo     String
+  status    String
+  fonte     String?
+  tempoMs   Int?
+  criadoEm  DateTime @default(now())
+
+  @@index([tipo, criadoEm])
+  @@map("consultas")
+}

@@ -1,0 +1,249 @@
+<header class="page-header">
+  <div>
+    <span class="eyebrow">BRASIL DATA HUB</span>
+    <h1>Histórico de Consultas</h1>
+    <p>Consulte, filtre e acompanhe as pesquisas realizadas.</p>
+  </div>
+
+  <button
+    type="button"
+    class="refresh-button"
+    (click)="carregar()"
+    [disabled]="carregando()"
+  >
+    {{ carregando() ? 'Atualizando...' : 'Atualizar dados' }}
+  </button>
+</header>
+
+<section class="stats-grid">
+  <article class="stat-card">
+    <span>Total no banco</span>
+    <strong>{{ total() }}</strong>
+    <small>Todas as consultas registradas</small>
+  </article>
+
+  <article class="stat-card">
+    <span>Resultados filtrados</span>
+    <strong>{{ totalFiltrado() }}</strong>
+    <small>Consultas encontradas</small>
+  </article>
+
+  <article class="stat-card">
+    <span>Consultas com sucesso</span>
+    <strong>{{ indicadores().sucesso }}</strong>
+    <small>No conjunto filtrado</small>
+  </article>
+
+  <article class="stat-card">
+    <span>Tempo médio</span>
+    <strong>{{ indicadores().tempoMedio }} ms</strong>
+    <small>No conjunto filtrado</small>
+  </article>
+</section>
+
+<section class="table-panel">
+  <div class="table-heading">
+    <h2>Registros de consultas</h2>
+    <p>Utilize os filtros para localizar informações.</p>
+  </div>
+
+  <form class="filters" (ngSubmit)="aplicarFiltros()">
+    <div class="filter-group search">
+      <label for="busca">Pesquisar</label>
+      <input
+        id="busca"
+        name="busca"
+        type="search"
+        placeholder="CEP, CNPJ ou fonte..."
+        [ngModel]="busca()"
+        (ngModelChange)="busca.set($event)"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label for="tipo">Tipo</label>
+      <select
+        id="tipo"
+        name="tipo"
+        [ngModel]="tipo()"
+        (ngModelChange)="tipo.set($event)"
+      >
+        <option value="">Todos os tipos</option>
+        <option value="CEP">CEP</option>
+        <option value="CNPJ">CNPJ</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="status">Status</label>
+      <select
+        id="status"
+        name="status"
+        [ngModel]="status()"
+        (ngModelChange)="status.set($event)"
+      >
+        <option value="">Todos os status</option>
+        <option value="SUCESSO">Sucesso</option>
+        <option value="NAO_ENCONTRADO">Não encontrado</option>
+        <option value="INDISPONIVEL">Indisponível</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="dataInicio">Data inicial</label>
+      <input
+        id="dataInicio"
+        name="dataInicio"
+        type="date"
+        [ngModel]="dataInicio()"
+        (ngModelChange)="dataInicio.set($event)"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label for="dataFim">Data final</label>
+      <input
+        id="dataFim"
+        name="dataFim"
+        type="date"
+        [ngModel]="dataFim()"
+        (ngModelChange)="dataFim.set($event)"
+      />
+    </div>
+
+    <div class="filter-actions">
+      <button type="submit" [disabled]="carregando()">
+        Aplicar filtros
+      </button>
+
+      <button
+        type="button"
+        class="secondary"
+        (click)="limparFiltros()"
+        [disabled]="carregando()"
+      >
+        Limpar
+      </button>
+    </div>
+  </form>
+
+  @if (erro()) {
+    <div class="error" role="alert">
+      {{ erro() }}
+    </div>
+  }
+
+  @if (carregando()) {
+    <div class="message">Carregando registros...</div>
+  } @else if (!erro()) {
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Pesquisa</th>
+            <th>Fonte</th>
+            <th>Status</th>
+            <th>Tempo</th>
+            <th>Data e hora</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (consulta of consultas(); track consulta.id) {
+            <tr>
+              <td>
+                <span class="type-badge">
+                  {{ consulta.tipo }}
+                </span>
+              </td>
+
+              <td class="search-term">
+                {{ consulta.termo }}
+              </td>
+
+              <td>
+                {{ consulta.fonte || '—' }}
+              </td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [class.success]="consulta.status === 'SUCESSO'"
+                >
+                  {{ consulta.status }}
+                </span>
+              </td>
+
+              <td>
+                {{
+                  consulta.tempoMs === null
+                    ? '—'
+                    : consulta.tempoMs + ' ms'
+                }}
+              </td>
+
+              <td>
+                {{
+                  consulta.criadoEm |
+                  date:'dd/MM/yyyy HH:mm':'-0300'
+                }}
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty">
+                Nenhuma consulta encontrada para os filtros.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <span>
+        {{ totalFiltrado() }} registros encontrados
+        — {{ consultas().length }} nesta página
+      </span>
+
+      <div class="pagination">
+        <label for="limite">Por página:</label>
+
+        <select
+          id="limite"
+          name="limite"
+          [ngModel]="limite()"
+          (ngModelChange)="alterarLimite($event)"
+          [disabled]="carregando()"
+        >
+          <option [ngValue]="2">2</option>
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+        </select>
+
+        <button
+          type="button"
+          (click)="mudarPagina(-1)"
+          [disabled]="pagina() <= 1 || carregando()"
+        >
+          Anterior
+        </button>
+
+        <span>
+          {{ pagina() }} / {{ totalPaginas() }}
+        </span>
+
+        <button
+          type="button"
+          (click)="mudarPagina(1)"
+          [disabled]="pagina() >= totalPaginas() || carregando()"
+        >
+          Próxima
+        </button>
+      </div>
+    </div>
+  }
+</section>

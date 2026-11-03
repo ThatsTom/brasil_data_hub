@@ -1,0 +1,17 @@
+no front
+
+npm.cmd start
+
+
+no back
+
+npm.cmd run start:dev
+
+
+primsa
+
+npx.cmd prisma init --datasource-provider postgresql --output ../src/generated/prisma
+
+npx.cmd prisma generate
+
+npx.cmd prisma studio

@@ -1,0 +1,113 @@
+<section class="page-header">
+  <span class="eyebrow">CONSULTAS CADASTRAIS</span>
+  <h1>Consulta de CEP</h1>
+  <p>
+    Consulte endereços brasileiros utilizando fontes públicas.
+  </p>
+</section>
+
+<div class="content-grid">
+  <section class="panel">
+    <div class="panel-heading">
+      <h2>Pesquisar endereço</h2>
+      <p>Informe o CEP desejado.</p>
+    </div>
+
+    <form (ngSubmit)="consultar()">
+      <label for="cep">CEP</label>
+
+      <div class="input-group">
+        <input
+          id="cep"
+          name="cep"
+          type="text"
+          inputmode="numeric"
+          autocomplete="postal-code"
+          maxlength="9"
+          placeholder="01001-000"
+          [ngModel]="cep()"
+          (ngModelChange)="cep.set($event)"
+        />
+
+        <button type="submit" [disabled]="carregando()">
+          {{ carregando() ? 'Consultando...' : 'Consultar CEP' }}
+        </button>
+      </div>
+    </form>
+
+    @if (erro()) {
+      <div class="error-message" role="alert">
+        {{ erro() }}
+      </div>
+    }
+  </section>
+
+  <aside class="panel information-panel">
+    <span class="eyebrow">INTEGRAÇÕES</span>
+    <h2>Fontes de dados</h2>
+
+    <div class="provider">
+      <span class="status-dot"></span>
+      BrasilAPI — Principal
+    </div>
+
+    <div class="provider">
+      <span class="status-dot"></span>
+      ViaCEP — Alternativa
+    </div>
+
+    <p>
+      As fontes são consultadas conforme a disponibilidade.
+    </p>
+  </aside>
+</div>
+
+@if (endereco(); as resultado) {
+  <section class="panel result-panel">
+    <div class="result-heading">
+      <div>
+        <span class="eyebrow">RESULTADO DA CONSULTA</span>
+        <h2>Endereço encontrado</h2>
+      </div>
+
+      <span class="success-label">Consulta concluída</span>
+    </div>
+
+    <div class="result-grid">
+      <div class="field">
+        <span>CEP</span>
+        <strong>{{ resultado.cep }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Logradouro</span>
+        <strong>{{ resultado.logradouro || 'Não informado' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Bairro</span>
+        <strong>{{ resultado.bairro || 'Não informado' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Cidade</span>
+        <strong>{{ resultado.cidade }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Estado</span>
+        <strong>{{ resultado.uf }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Fonte</span>
+        <strong>{{ resultado.fonte }}</strong>
+      </div>
+    </div>
+  </section>
+} @else {
+  <section class="panel empty-state">
+    <h2>Nenhuma consulta selecionada</h2>
+    <p>Digite um CEP para visualizar os dados do endereço.</p>
+  </section>
+}

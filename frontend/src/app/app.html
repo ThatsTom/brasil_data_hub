@@ -1,0 +1,50 @@
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">BR</div>
+      <div>
+        <strong>Brasil Data Hub</strong>
+        <small>Plataforma de Dados</small>
+      </div>
+    </div>
+
+    <span class="menu-label">CONSULTAS</span>
+
+    <nav>
+  <a
+    routerLink="/cep"
+    routerLinkActive="nav-active"
+  >
+    Consulta de CEP
+  </a>
+
+  <a
+    routerLink="/historico"
+    routerLinkActive="nav-active"
+  >
+    Histórico de Consultas
+  </a>
+
+  <span>CNPJ — Em breve</span>
+  <span>Bancos — Em breve</span>
+  <span>Municípios — Em breve</span>
+  <span>Feriados — Em breve</span>
+</nav>
+
+    <div class="sidebar-footer">
+      Brasil Data Hub
+      <small>Projeto Fullstack · Angular + NestJS</small>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <span>Brasil Data Hub / Consultas</span>
+      <span class="environment">Ambiente local</span>
+    </header>
+
+    <div class="page-content">
+      <router-outlet />
+    </div>
+  </main>
+</div>

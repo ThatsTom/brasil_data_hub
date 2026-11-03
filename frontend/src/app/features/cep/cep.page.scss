@@ -1,0 +1,185 @@
+:host {
+  display: block;
+}
+
+.page-header {
+  margin-bottom: 28px;
+
+  h1 {
+    font-size: 32px;
+    letter-spacing: -1px;
+    margin: 8px 0;
+  }
+
+  p {
+    color: #64748b;
+  }
+}
+
+.eyebrow {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.panel-heading {
+  margin-bottom: 24px;
+
+  h2 {
+    margin: 0 0 6px;
+  }
+
+  p {
+    color: #64748b;
+    margin: 0;
+  }
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.input-group {
+  display: flex;
+  gap: 12px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    outline-color: #2563eb;
+  }
+
+  button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+  }
+}
+
+.information-panel {
+  .provider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 18px 0;
+    font-weight: 500;
+  }
+
+  p {
+    color: #64748b;
+    font-size: 13px;
+  }
+}
+
+.status-dot {
+  height: 9px;
+  width: 9px;
+  background: #22c55e;
+  border-radius: 50%;
+}
+
+.error-message {
+  margin-top: 18px;
+  padding: 14px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 10px;
+}
+
+.result-panel,
+.empty-state {
+  margin-top: 20px;
+}
+
+.result-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.success-label {
+  color: #15803d;
+  background: #dcfce7;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  span {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  strong {
+    overflow-wrap: anywhere;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  color: #64748b;
+  padding: 42px;
+}
+
+@media (max-width: 900px) {
+  .content-grid,
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 500px) {
+  .input-group {
+    flex-direction: column;
+  }
+
+  .result-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .panel {
+    padding: 20px;
+  }
+}
