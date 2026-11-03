@@ -1,0 +1,249 @@
+<header class="page-header">
+    <div>
+        <span class="eyebrow">CONSULTAS E PLANEJAMENTO</span>
+        <h1>Calendário de Feriados</h1>
+        <p>
+            Explore os feriados e datas especiais disponibilizados
+            pela BrasilAPI.
+        </p>
+    </div>
+
+    <span class="source-badge">Fonte: BrasilAPI</span>
+</header>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <span>Ano selecionado</span>
+        <strong>{{ anoExibido() }}</strong>
+        <small>Calendário brasileiro</small>
+    </article>
+
+    <article class="stat-card">
+        <span>Datas no ano</span>
+        <strong>{{ feriados().length }}</strong>
+        <small>Registros retornados pela API</small>
+    </article>
+
+    <article class="stat-card">
+        <span>Datas em dias de semana</span>
+
+        <strong>
+            {{ totalFeriadosUteis() }}
+        </strong>
+
+        <small>
+            Segunda a sexta-feira no ano
+        </small>
+    </article>
+
+    <article class="stat-card">
+        <span>Datas no mês</span>
+        <strong>{{ totalMes() }}</strong>
+        <small>{{ meses[mesAtual()] }}</small>
+    </article>
+</section>
+
+<section class="panel query-panel">
+    <div class="section-heading">
+        <div>
+            <h2>Consultar calendário</h2>
+            <p>Selecione o ano que deseja visualizar.</p>
+        </div>
+    </div>
+
+    <form class="query-form" (ngSubmit)="consultarAno()">
+        <div class="field-group">
+            <label for="ano">Ano de referência</label>
+
+            <input id="ano" name="ano" type="number" min="1900" max="2199" step="1" required [ngModel]="anoDigitado()"
+                (ngModelChange)="anoDigitado.set($event)" />
+        </div>
+
+        <button type="submit" class="primary" [disabled]="carregando()">
+            {{ carregando() ? 'Consultando...' : 'Consultar ano' }}
+        </button>
+    </form>
+
+    <p class="helper-text">
+        A consulta explícita será registrada no seu Histórico de Consultas.
+        Navegar pelos meses não cria novos registros.
+    </p>
+
+    @if (atualizadoEm()) {
+    <p class="updated-text">
+        Dados obtidos em
+        {{
+        atualizadoEm() |
+        date:'dd/MM/yyyy HH:mm':'-0300'
+        }}
+    </p>
+    }
+
+    @if (cacheDesatualizado()) {
+    <div class="cache-warning" role="status">
+        A atualização da BrasilAPI falhou.
+        Estamos exibindo os últimos dados disponíveis em cache.
+    </div>
+    }
+
+    @if (erro()) {
+    <div class="error-message" role="alert">
+        {{ erro() }}
+    </div>
+    }
+
+    <div class="notice">
+        Atenção: algumas datas podem ser pontos facultativos.
+        Confirme a classificação legal em fontes oficiais quando necessário.
+    </div>
+</section>
+
+<div class="content-grid">
+    <section class="panel calendar-panel">
+        <div class="calendar-header">
+            <div>
+                <span class="eyebrow">VISUALIZAÇÃO MENSAL</span>
+                <h2>{{ meses[mesAtual()] }} de {{ anoExibido() }}</h2>
+            </div>
+
+            <div class="calendar-navigation">
+                <button type="button" aria-label="Mês anterior" (click)="navegarMes(-1)" [disabled]="mesAtual() === 0">
+                    ←
+                </button>
+
+                <button type="button" aria-label="Próximo mês" (click)="navegarMes(1)" [disabled]="mesAtual() === 11">
+                    →
+                </button>
+            </div>
+        </div>
+
+        <div class="weekday-grid">
+            @for (dia of diasSemana; track dia) {
+            <div>{{ dia }}</div>
+            }
+        </div>
+
+        <div class="calendar-grid">
+            @for (celula of calendario(); track celula.chave) {
+            <div class="calendar-day" [class.empty-day]="celula.dia === null" [class.today]="celula.hoje"
+                [class.holiday-day]="celula.feriados.length > 0">
+                @if (celula.dia !== null) {
+                <span class="day-number">
+                    {{ celula.dia }}
+                </span>
+
+                @if (celula.feriados.length > 0) {
+                <div class="holiday-event">
+                    {{ celula.feriados[0].nome }}
+                </div>
+
+                @if (celula.feriados.length > 1) {
+                <span class="additional-events">
+                    +{{ celula.feriados.length - 1 }} outra(s)
+                </span>
+                }
+                }
+                }
+            </div>
+            }
+        </div>
+    </section>
+
+    <aside class="panel list-panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">DATAS DO MÊS</span>
+                <h2>Lista de eventos</h2>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label for="mes">Mês</label>
+
+            <select id="mes" name="mes" [ngModel]="mesFiltro()" (ngModelChange)="selecionarMes($event)">
+                <option [ngValue]="-1">
+                    Todos os meses
+                </option>
+
+                @for (mes of meses; track $index) {
+                <option [ngValue]="$index">
+                    {{ mes }}
+                </option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="pesquisa">Pesquisar por nome</label>
+
+            <input id="pesquisa" name="pesquisa" type="search" placeholder="Ex.: Natal, Tiradentes..."
+                [ngModel]="busca()" (ngModelChange)="busca.set($event)" />
+        </div>
+        <div class="weekday-filter">
+            <label for="somenteDiasUteis">
+                <input id="somenteDiasUteis" name="somenteDiasUteis" type="checkbox" [ngModel]="somenteDiasUteis()"
+                    (ngModelChange)="somenteDiasUteis.set($event)" />
+
+                <span>
+                    Somente feriados de segunda a sexta
+                </span>
+            </label>
+
+            <small>
+                Oculta datas que caem aos sábados e domingos.
+            </small>
+        </div>
+
+        @if (busca()) {
+        <button class="clear-search" type="button" (click)="limparBusca()">
+            Limpar pesquisa
+        </button>
+        }
+
+        <div class="events-heading">
+            {{ feriadosMes().length }} evento(s) encontrado(s)
+        </div>
+
+        @if (carregando()) {
+        <div class="empty-events">
+            Carregando datas...
+        </div>
+        } @else {
+        <div class="events-list">
+            @for (
+            feriado of feriadosMes();
+            track feriado.data + feriado.nome
+            ) {
+            <article class="event-card">
+                <div class="event-date">
+                    {{ formatarData(feriado.data) }}
+                </div>
+
+                <div class="event-content">
+                    <strong>{{ feriado.nome }}</strong>
+
+                    <span>
+                        {{ diaDaSemana(feriado.data) }}
+                    </span>
+                    <small class="weekday-label" [class.weekend]="!caiEmDiaDeSemana(feriado.data)">
+                        {{
+                        caiEmDiaDeSemana(feriado.data)
+                        ? 'Segunda a sexta-feira'
+                        : 'Fim de semana'
+                        }}
+                    </small>
+
+                    <small>
+                        {{ traduzirTipo(feriado.tipo) }}
+                    </small>
+                </div>
+            </article>
+            } @empty {
+            <div class="empty-events">
+                Nenhuma data encontrada para este mês e pesquisa.
+            </div>
+            }
+        </div>
+        }
+    </aside>
+</div>

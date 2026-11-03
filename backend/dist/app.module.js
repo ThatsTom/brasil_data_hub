@@ -14,6 +14,7 @@ import { ConsultasModule } from './consultas/consultas.module.js';
 import { CnpjModule } from './cnpj/cnpj.module.js';
 import { BancosModule } from './bancos/bancos.module.js';
 import { LocalidadesModule } from './localidades/localidades.module.js';
+import { FeriadosModule } from './feriados/feriados.module.js';
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
@@ -26,6 +27,7 @@ AppModule = __decorate([
             CnpjModule,
             BancosModule,
             LocalidadesModule,
+            FeriadosModule,
         ],
         controllers: [AppController],
         providers: [AppService],

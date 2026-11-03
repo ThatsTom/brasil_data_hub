@@ -40,6 +40,13 @@ export const routes: Routes = [
         title: 'Estados e Municípios | Brasil Data Hub',
     },
     {
+  path: 'feriados',
+  loadComponent: () =>
+    import('./features/feriados/feriados.page')
+      .then(m => m.FeriadosPage),
+  title: 'Calendário de Feriados | Brasil Data Hub',
+},
+    {
         path: '**',
         redirectTo: 'cep',
     },
