@@ -1,0 +1,265 @@
+<header class="page-header">
+  <div>
+    <span class="eyebrow">CONSULTAS CADASTRAIS</span>
+    <h1>Diretório de Bancos</h1>
+    <p>
+      Consulte instituições financeiras brasileiras,
+      códigos bancários e identificadores ISPB.
+    </p>
+  </div>
+
+  <button
+    class="refresh-button"
+    type="button"
+    [disabled]="carregando()"
+    (click)="carregar()"
+  >
+    Atualizar listagem
+  </button>
+</header>
+
+<section class="stats-grid">
+  <article class="stat-card">
+    <span>Instituições cadastradas</span>
+    <strong>{{ total() }}</strong>
+    <small>Na base consultada</small>
+  </article>
+
+  <article class="stat-card">
+    <span>Resultados encontrados</span>
+    <strong>{{ totalFiltrado() }}</strong>
+    <small>Após aplicar a pesquisa</small>
+  </article>
+
+  <article class="stat-card">
+    <span>Instituições nesta página</span>
+    <strong>{{ bancos().length }}</strong>
+    <small>Registros carregados</small>
+  </article>
+</section>
+
+<section class="panel search-panel">
+  <div class="section-heading">
+    <div>
+      <h2>Pesquisar instituição</h2>
+      <p>Busque por nome, código bancário ou ISPB.</p>
+    </div>
+  </div>
+
+  <form class="search-form" (ngSubmit)="pesquisar()">
+    <div class="input-wrapper">
+      <label for="busca">Instituição, código ou ISPB</label>
+
+      <input
+        id="busca"
+        name="busca"
+        type="search"
+        maxlength="80"
+        placeholder="Ex.: Banco do Brasil, 001 ou 00000000"
+        [ngModel]="busca()"
+        (ngModelChange)="busca.set($event)"
+      />
+    </div>
+
+    <button
+      type="submit"
+      class="primary"
+      [disabled]="carregando()"
+    >
+      {{ carregando() ? 'Pesquisando...' : 'Pesquisar' }}
+    </button>
+
+    <button
+      type="button"
+      class="secondary"
+      [disabled]="carregando()"
+      (click)="limpar()"
+    >
+      Limpar
+    </button>
+  </form>
+
+  @if (cacheDesatualizado()) {
+    <div class="cache-warning" role="status">
+      A BrasilAPI não respondeu. Exibindo a última lista
+      disponível em cache.
+    </div>
+  }
+
+  @if (erro()) {
+    <div class="error-message" role="alert">
+      {{ erro() }}
+    </div>
+  }
+</section>
+
+<section class="panel table-panel">
+  <div class="section-heading">
+    <div>
+      <h2>Instituições financeiras</h2>
+
+      <p>
+        @if (atualizadoEm()) {
+          Base consultada em
+          {{
+            atualizadoEm() |
+            date:'dd/MM/yyyy HH:mm':'-0300'
+          }}
+        } @else {
+          Diretório de instituições
+        }
+      </p>
+    </div>
+
+    <span class="source-badge">Fonte: BrasilAPI</span>
+  </div>
+
+  @if (carregando()) {
+    <div class="empty-state">
+      Carregando instituições...
+    </div>
+  } @else if (!erro()) {
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Instituição</th>
+            <th>Nome completo</th>
+            <th>ISPB</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (banco of bancos(); track $index) {
+            <tr>
+              <td>
+                <span class="code-badge">
+                  {{ formatarCodigo(banco.codigo) }}
+                </span>
+              </td>
+
+              <td class="bank-name">
+                {{ banco.nome }}
+              </td>
+
+              <td>
+                {{ banco.nomeCompleto }}
+              </td>
+
+              <td class="ispb">
+                {{ banco.ispb || '—' }}
+              </td>
+
+              <td>
+                <button
+                  type="button"
+                  class="details-button"
+                  (click)="selecionar(banco)"
+                >
+                  Ver detalhes
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty-state">
+                Nenhuma instituição encontrada.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <span>
+        {{ totalFiltrado() }} instituições encontradas
+      </span>
+
+      <div class="pagination">
+        <label for="limite">Por página:</label>
+
+        <select
+          id="limite"
+          name="limite"
+          [ngModel]="limite()"
+          (ngModelChange)="alterarLimite($event)"
+          [disabled]="carregando()"
+        >
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+        </select>
+
+        <button
+          type="button"
+          (click)="mudarPagina(-1)"
+          [disabled]="pagina() <= 1 || carregando()"
+        >
+          Anterior
+        </button>
+
+        <span>
+          {{ pagina() }} / {{ totalPaginas() }}
+        </span>
+
+        <button
+          type="button"
+          (click)="mudarPagina(1)"
+          [disabled]="pagina() >= totalPaginas() || carregando()"
+        >
+          Próxima
+        </button>
+      </div>
+    </div>
+  }
+</section>
+
+@if (selecionado(); as banco) {
+  <section class="panel detail-panel">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">DADOS DA INSTITUIÇÃO</span>
+        <h2>{{ banco.nomeCompleto }}</h2>
+      </div>
+
+      <button
+        class="secondary"
+        type="button"
+        (click)="selecionado.set(null)"
+      >
+        Fechar detalhes
+      </button>
+    </div>
+
+    <div class="details-grid">
+      <div class="field">
+        <span>Nome</span>
+        <strong>{{ banco.nome }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Nome completo</span>
+        <strong>{{ banco.nomeCompleto }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Código bancário</span>
+        <strong>{{ formatarCodigo(banco.codigo) }}</strong>
+      </div>
+
+      <div class="field">
+        <span>ISPB</span>
+        <strong>{{ banco.ispb || 'Não informado' }}</strong>
+      </div>
+
+      <div class="field">
+        <span>Fonte</span>
+        <strong>{{ banco.fonte }}</strong>
+      </div>
+    </div>
+  </section>
+}
